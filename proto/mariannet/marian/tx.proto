@@ -1,0 +1,7 @@
+syntax = "proto3";
+package mariannet.marian;
+
+option go_package = "github.com/meczero/mariannet/x/marian/types";
+
+// Msg defines the Msg service.
+service Msg {}

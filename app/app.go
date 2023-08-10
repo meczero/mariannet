@@ -110,6 +110,9 @@ import (
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/spf13/cast"
 
+	marianmodule "github.com/meczero/mariannet/x/marian"
+	marianmodulekeeper "github.com/meczero/mariannet/x/marian/keeper"
+	marianmoduletypes "github.com/meczero/mariannet/x/marian/types"
 	mariannetmodule "github.com/meczero/mariannet/x/mariannet"
 	mariannetmodulekeeper "github.com/meczero/mariannet/x/mariannet/keeper"
 	mariannetmoduletypes "github.com/meczero/mariannet/x/mariannet/types"
@@ -174,6 +177,7 @@ var (
 		vesting.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		mariannetmodule.AppModuleBasic{},
+		marianmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -250,6 +254,8 @@ type App struct {
 	ScopedICAHostKeeper  capabilitykeeper.ScopedKeeper
 
 	MariannetKeeper mariannetmodulekeeper.Keeper
+
+	MarianKeeper marianmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -297,6 +303,7 @@ func New(
 		feegrant.StoreKey, evidencetypes.StoreKey, ibctransfertypes.StoreKey, icahosttypes.StoreKey,
 		capabilitytypes.StoreKey, group.StoreKey, icacontrollertypes.StoreKey, consensusparamtypes.StoreKey,
 		mariannetmoduletypes.StoreKey,
+		marianmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -527,6 +534,14 @@ func New(
 	)
 	mariannetModule := mariannetmodule.NewAppModule(appCodec, app.MariannetKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.MarianKeeper = *marianmodulekeeper.NewKeeper(
+		appCodec,
+		keys[marianmoduletypes.StoreKey],
+		keys[marianmoduletypes.MemStoreKey],
+		app.GetSubspace(marianmoduletypes.ModuleName),
+	)
+	marianModule := marianmodule.NewAppModule(appCodec, app.MarianKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	/**** IBC Routing ****/
@@ -589,6 +604,7 @@ func New(
 		transferModule,
 		icaModule,
 		mariannetModule,
+		marianModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 
 		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
@@ -622,6 +638,7 @@ func New(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		mariannetmoduletypes.ModuleName,
+		marianmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -648,6 +665,7 @@ func New(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		mariannetmoduletypes.ModuleName,
+		marianmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -679,6 +697,7 @@ func New(
 		vestingtypes.ModuleName,
 		consensusparamtypes.ModuleName,
 		mariannetmoduletypes.ModuleName,
+		marianmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	}
 	app.mm.SetOrderInitGenesis(genesisModuleOrder...)
@@ -904,6 +923,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(mariannetmoduletypes.ModuleName)
+	paramsKeeper.Subspace(marianmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper

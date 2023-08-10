@@ -1,0 +1,12 @@
+syntax = "proto3";
+package mariannet.marian;
+
+import "gogoproto/gogo.proto";
+import "mariannet/marian/params.proto";
+
+option go_package = "github.com/meczero/mariannet/x/marian/types";
+
+// GenesisState defines the marian module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
